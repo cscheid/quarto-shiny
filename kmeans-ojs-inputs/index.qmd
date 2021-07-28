@@ -1,0 +1,62 @@
+---
+title: "kMeans in Shiny, with OJS inputs"
+format:
+  html:
+    theme: cosmo
+    code-tools:
+      toggle: true
+server:
+  type: shiny
+echo: false
+---
+
+This is a translation of [the kmeans
+example](https://shiny.rstudio.com/gallery/kmeans-example.html) in
+RStudio's Shiny gallery. The only difference is that here we're using
+Observable's inputs to control the Shiny parameters.
+
+### Inputs
+
+```{r}
+vars <- setdiff(names(iris), "Species")
+ojs_define(vars)
+# selectInput('xcol', 'X Variable', vars)
+# selectInput('ycol', 'Y Variable', vars, selected = vars[[2]])
+# numericInput('clusters', 'Cluster count', 3, min = 1, max = 9)
+```
+
+```{ojs}
+viewof xcol = Inputs.select(vars, {label: "X Variable"})
+viewof ycol = Inputs.select(vars, {label: "Y Variable", value: vars[1]})
+viewof clusters = Inputs.range([1, 9], {label: "Cluster Count", step: 1, value: 3})
+```
+
+### Outputs
+
+```{r}
+plotOutput('plot1')
+```
+
+```{r}
+#| context: server
+
+# Combine the selected variables into a new data frame
+selectedData <- reactive({
+  iris[, c(input$xcol, input$ycol)]
+})
+
+clusters <- reactive({
+  kmeans(selectedData(), input$clusters)
+})
+
+output$plot1 <- renderPlot({
+  palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+    "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+
+  par(mar = c(5.1, 4.1, 0, 1))
+  plot(selectedData(),
+       col = clusters()$cluster,
+       pch = 20, cex = 3)
+  points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
+})
+```

@@ -1,0 +1,9 @@
+---
+title: "Quarto + Shiny examples"
+---
+
+## Basics
+
+* [k-means in 'pure shiny'](kmeans-pure-shiny/index.qmd)
+* [k-means with ojs inputs](kmeans-ojs-inputs/index.qmd)
+* [k-means with ojs outputs](kmeans-ojs-outputs/index.qmd)

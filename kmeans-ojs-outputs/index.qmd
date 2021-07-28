@@ -1,0 +1,80 @@
+---
+title: "kMeans with OJS outputs"
+format:
+  html:
+    theme: cosmo
+    code-tools:
+      toggle: true
+server:
+  type: shiny
+echo: false
+---
+
+This is a translation of [the kmeans
+example](https://shiny.rstudio.com/gallery/kmeans-example.html) in
+RStudio's Shiny gallery where we visualize the output using Observable's Plot instead of R base plots.
+
+### Inputs
+
+```{r}
+vars <- setdiff(names(iris), "Species")
+selectInput('xcol', 'X Variable', vars)
+selectInput('ycol', 'Y Variable', vars, selected = vars[[2]])
+numericInput('clusters', 'Cluster count', 3, min = 1, max = 9)
+```
+
+### Outputs
+
+```{r}
+#| context: server
+
+# NB: we're relying on the order of the JSON serialization
+# to figure out which is the x coordinate and which is the y coordinate.
+# Is this safe?
+
+# Combine the selected variables into a new data frame
+selectedData <- reactive({
+  iris[, c(input$xcol, input$ycol)]
+})
+
+clusters <- reactive({
+  kmeans(selectedData(), input$clusters)
+})
+
+ojs_define(selectedData, clusters)
+```
+
+```{ojs}
+//| output: false
+function transpose(df)
+{
+  const keys = Object.keys(df);
+  return df[keys[0]].map((_, i) => Object.fromEntries(keys.map(key => [key, df[key][i]])));
+}
+df = transpose(selectedData)
+xVar = Object.keys(selectedData)[0];
+yVar = Object.keys(selectedData)[1];
+```
+
+```{ojs}
+Plot.plot({
+  color: {
+    type: "ordinal",
+    scheme: "category10"
+  },
+  marks: [
+    Plot.dot(df, {
+      x: xVar,
+      y: yVar,
+      fill: (d, i) => clusters.cluster[i],
+    }),
+    Plot.dot(clusters.centers, { // Plot doesn't support X marks...
+      x: d => d[0],
+      y: d => d[1],
+      r: 10,
+      stroke: "black",
+      fill: (d, i) => i + 1
+    }),
+  ]
+})
+```
